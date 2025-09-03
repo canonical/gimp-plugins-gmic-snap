@@ -1,0 +1,1 @@
+# gimp-plugins-gmic-snap
