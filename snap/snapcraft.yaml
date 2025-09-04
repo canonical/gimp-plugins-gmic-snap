@@ -1,0 +1,121 @@
+name: gimp-plugins-gmic
+title: G'MIC Plugins for GIMP
+summary: A Full-Featured Open-Source Framework for Image Processing
+description: |
+  G'MIC is a full-featured open-source framework for digital image processing.
+  This is a content producer snap providing G'MIC plugins for the GIMP snap.
+website: https://gmic.eu/
+contact: https://github.com/GreycLab/gmic/issues
+issues: https://github.com/GreycLab/gmic/issues
+source-code: https://github.com/GreycLab/gmic
+license: CECILL-2.1
+
+version: 3.6.1
+
+grade: stable
+confinement: strict
+base: core24
+compression: lzo
+
+platforms:
+  arm64:
+  amd64:
+
+slots:
+  gimp-plugins:
+    interface: content
+    content: gimp-plugins
+    source:
+      read:
+        - $SNAP/wrappers/gmic
+        - $SNAP/third-party/gmic_gimp_qt
+        - $SNAP/libs/gmic
+
+parts:
+
+  wrapper:
+    plugin: dump
+    source: wrapper/
+    organize:
+      gmic.env: wrappers/gmic/gmic.env
+
+  gmic:
+    plugin: dump
+    source: https://gmic.eu/files/source/gmic_3.6.1.tar.gz
+    build-environment:
+      - QT_SELECT: qt6
+      - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
+      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-46-2404-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
+      - LD_LIBRARY_PATH: /snap/gnome-46-2404-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib:/snap/gnome-46-2404-sdk/current/usr/lib/vala-current:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      - PKG_CONFIG_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/lib/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/share/pkgconfig:${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
+      - GETTEXTDATADIRS: /snap/gnome-46-2404-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
+      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
+      - ACLOCAL_PATH: /snap/gnome-46-2404-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
+      - PYTHONPATH: /snap/gnome-46-2404-sdk/current/usr/lib/python3.10:/snap/gnome-46-2404-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
+      - GI_TYPELIB_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/girepository-1.0:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
+      - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr:/snap/gnome-46-2404-sdk/current/usr${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
+    build-packages:
+      - cmake
+      - libgexiv2-dev
+      - pkg-config
+      - qt6-base-dev
+      - qt6-l10n-tools
+      - qt6-tools-dev
+      - qt6-wayland-dev
+      - qtchooser
+      - wget
+    build-snaps:
+      - gimp
+      - gnome-46-2404-sdk
+    stage-packages:
+      - libcurl4
+      - libdouble-conversion3
+      - libfftw3-double3
+      - libffi8
+      - libgraphicsmagick-q16-3
+      - libgraphicsmagick++-q16-12
+      - libjpeg-turbo8
+      - libopencv-core406t64
+      - libopencv-highgui406t64
+      - libopencv-video406t64
+      - libopenexr-3-1-30
+      - libpng16-16
+      - libqt6core6t64
+      - libqt6gui6t64
+      - libqt6network6t64
+      - libqt6widgets6t64
+      - qt6-wayland
+    override-build: |
+      qtchooser -install qt6 "$(which qmake6)" || true
+      make -C src CImg.h gmic_stdlib_community.h
+
+      cd gmic-qt
+      # The CMakeLists.txt file hard-codes a minimum QT6 version of 6.5.0, which is not available
+      # in Noble. Testing confirms that things seem to work fine on the version in Noble (6.4.2).
+      sed -i "s|set(MIN_QT_VERSION 6.5.0)|set(MIN_QT_VERSION 6.4.0)|g" CMakeLists.txt
+
+      mkdir build
+      cd build
+
+      mkdir gimp-pkgconfig
+      GIMP_PKGCONFIG=/snap/gimp/current/usr/lib/x86_64-linux-gnu/pkgconfig
+      for pc in $(ls "${GIMP_PKGCONFIG}")
+      do
+        sed 's|prefix=.*|prefix=/snap/gimp/current/usr|' "${GIMP_PKGCONFIG}/${pc}" > "gimp-pkgconfig/${pc}"
+      done
+      export PKG_CONFIG_PATH=$PWD/gimp-pkgconfig:$PKG_CONFIG_PATH
+
+      cmake \
+        -DGMIC_QT_HOST=gimp3 \
+        -DGMIC_PATH=$CRAFT_PART_SRC/src \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DENABLE_SYSTEM_GMIC=OFF \
+        -DBUILD_WITH_QT6=ON \
+        ..
+
+      make
+
+      install -Dm 0755 $CRAFT_PART_BUILD/gmic-qt/build/gmic_gimp_qt \
+        $CRAFT_PART_INSTALL/third-party/gmic_gimp_qt/gmic_gimp_qt
+    organize:
+      usr/lib: libs/gmic
