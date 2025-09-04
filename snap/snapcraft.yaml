@@ -98,7 +98,7 @@ parts:
       cd build
 
       mkdir gimp-pkgconfig
-      GIMP_PKGCONFIG=/snap/gimp/current/usr/lib/x86_64-linux-gnu/pkgconfig
+      GIMP_PKGCONFIG=/snap/gimp/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig
       for pc in $(ls "${GIMP_PKGCONFIG}")
       do
         sed 's|prefix=.*|prefix=/snap/gimp/current/usr|' "${GIMP_PKGCONFIG}/${pc}" > "gimp-pkgconfig/${pc}"
