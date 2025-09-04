@@ -27,9 +27,9 @@ slots:
     content: gimp-plugins
     source:
       read:
-        - $SNAP/wrappers/gmic
-        - $SNAP/third-party/gmic_gimp_qt
-        - $SNAP/libs/gmic
+        - $SNAP/wrappers-gmic
+        - $SNAP/gmic_gimp_qt
+        - $SNAP/libs-gmic
 
 parts:
 
@@ -37,7 +37,7 @@ parts:
     plugin: dump
     source: wrapper/
     organize:
-      gmic.env: wrappers/gmic/gmic.env
+      gmic.env: wrappers-gmic/gmic.env
 
   gmic:
     plugin: dump
@@ -116,6 +116,6 @@ parts:
       make
 
       install -Dm 0755 $CRAFT_PART_BUILD/gmic-qt/build/gmic_gimp_qt \
-        $CRAFT_PART_INSTALL/third-party/gmic_gimp_qt/gmic_gimp_qt
+        $CRAFT_PART_INSTALL/gmic_gimp_qt/gmic_gimp_qt
     organize:
-      usr/lib: libs/gmic
+      usr/lib: libs-gmic
