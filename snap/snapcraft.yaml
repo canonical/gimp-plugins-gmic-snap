@@ -27,17 +27,17 @@ slots:
     content: gimp-plugins
     source:
       read:
-        - $SNAP/wrappers-gmic
+        - $SNAP/gmic.conf
         - $SNAP/gmic_gimp_qt
         - $SNAP/libs-gmic
 
 parts:
 
-  wrapper:
+  add-ld-library-path:
     plugin: dump
-    source: wrapper/
+    source: gmic.conf/
     organize:
-      gmic.env: wrappers-gmic/gmic.env
+      add-ld-library-path: gmic.conf/add-ld-library-path
 
   gmic:
     plugin: dump
@@ -86,6 +86,9 @@ parts:
       - libqt6network6t64
       - libqt6widgets6t64
       - qt6-wayland
+    override-pull: |
+      craftctl default
+      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/qt-plugin-path.patch
     override-build: |
       qtchooser -install qt6 "$(which qmake6)" || true
       make -C src CImg.h gmic_stdlib_community.h
@@ -119,4 +122,4 @@ parts:
       install -Dm 0755 $CRAFT_PART_BUILD/gmic-qt/build/gmic_gimp_qt \
         $CRAFT_PART_INSTALL/gmic_gimp_qt/gmic_gimp_qt
     organize:
-      usr/lib: libs-gmic
+      usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR: libs-gmic

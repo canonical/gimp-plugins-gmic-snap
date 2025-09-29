@@ -1,0 +1,12 @@
+diff -ruN gmic-3.6.1.orig/gmic-qt/src/GmicQt.cpp gmic-3.6.1/gmic-qt/src/GmicQt.cpp
+--- gmic-3.6.1.orig/gmic-qt/src/GmicQt.cpp	2025-08-26 08:36:17.000000000 -0500
++++ gmic-3.6.1/gmic-qt/src/GmicQt.cpp	2025-09-29 17:08:04.693023549 -0500
+@@ -149,6 +149,8 @@
+     setenv("QT_DEBUG_PLUGINS", "1", 1);
+   }
+ #endif
++  // manually set environment variable so the GIMP snap can find the Qt6 plugins
++  setenv("QT_PLUGIN_PATH", "/snap/gimp/current/gimp-plugins/libs-gmic/qt6/plugins", 1);
+   if (!fullexname) {
+     fullexname = dummy_app_name;
+   }
