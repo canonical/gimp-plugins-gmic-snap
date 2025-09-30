@@ -123,3 +123,5 @@ parts:
         $CRAFT_PART_INSTALL/gmic_gimp_qt/gmic_gimp_qt
     organize:
       usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR: libs-gmic
+    prime:
+      - -libs-gmic/qt-default
