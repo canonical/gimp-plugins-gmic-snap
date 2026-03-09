@@ -10,7 +10,7 @@ issues: https://github.com/GreycLab/gmic/issues
 source-code: https://github.com/GreycLab/gmic
 license: CECILL-2.1
 
-version: 3.6.1
+version: 3.7.2
 
 grade: stable
 confinement: strict
@@ -41,7 +41,7 @@ parts:
 
   gmic:
     plugin: dump
-    source: https://gmic.eu/files/source/gmic_3.6.1.tar.gz
+    source: https://gmic.eu/files/source/gmic_$CRAFT_PROJECT_VERSION.tar.gz
     build-environment:
       - QT_SELECT: qt6
       - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
