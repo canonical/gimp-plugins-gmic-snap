@@ -10,7 +10,7 @@ issues: https://github.com/GreycLab/gmic/issues
 source-code: https://github.com/GreycLab/gmic
 license: CECILL-2.1
 
-version: 3.7.2
+version: 3.7.4
 
 grade: stable
 confinement: strict
