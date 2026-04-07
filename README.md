@@ -10,8 +10,12 @@ To integrate the plugins with the GIMP snap, first install the snap from the Sna
 sudo snap install gimp-plugins-gmic
 ```
 
-Then connect the plugins to the GIMP snap:
+If you have not done so already, next install the GIMP snap from the Snap Store:
 
 ```shell
-sudo snap connect gimp:gimp-plugins gimp-plugins-gmic:gimp-plugins
+sudo snap install gimp
 ```
+
+> [!IMPORTANT]
+>
+> If you have upgraded to version >3.2.0 of the GIMP snap from version <3.2.0, you may need to run `rm -rf $HOME/.config/GIMP` in order for the plugins to appear.
