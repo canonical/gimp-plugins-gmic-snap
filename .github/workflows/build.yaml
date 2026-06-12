@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  pull_request:
+    paths:
+      - 'snap/**'
+      - 'gmic.conf/**'
+      - 'patches/**'
+      - '.github/workflows/build.yaml'
+    branches: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build snap and run smoke tests
+    runs-on: [self-hosted, linux, X64, xlarge, jammy]
+    # Only run on PRs from branches in the same repository (not forks)
+    # This ensures only trusted sources can trigger this workflow
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v6
+      - name: Find and parse snapcraft.yaml
+        id: snapcraft-yaml
+        uses: snapcrafters/ci/parse-snapcraft-yaml@main
+      - name: Build snap
+        uses: snapcore/action-build@v1
+        id: build
+        with:
+          path: ${{ steps.snapcraft-yaml.outputs.project-root }}
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: gimp-plugins-gmic-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ steps.build.outputs.snap }}
+          retention-days: 30
+      - name: Review the built snap
+        uses: diddlesnaps/snapcraft-review-action@v1
+        with:
+          snap: ${{ steps.build.outputs.snap }}
+          isClassic: ${{ steps.snapcraft-yaml.outputs.classic }}
+          plugs: ${{ steps.snapcraft-yaml.outputs.plugs-file }}
+          slots: ${{ steps.snapcraft-yaml.outputs.slots-file }}
+      - name: Install the snap
+        shell: bash
+        run: |
+          sudo snap install --dangerous "${{ steps.build.outputs.snap }}"

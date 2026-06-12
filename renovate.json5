@@ -1,0 +1,16 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
+  // Track the upstream G'MIC release used by the snap.
+  customManagers: [
+    {
+      customType: "regex",
+      description: "Update the snap version to match upstream G'MIC releases",
+      managerFilePatterns: ["/snap/snapcraft\\.yaml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: extractVersion=(?<extractVersion>\\S+))?\\s+version:\\s*(?<currentValue>\\S+)",
+      ],
+      versioningTemplate: "semver-coerced",
+    },
+  ],
+}
