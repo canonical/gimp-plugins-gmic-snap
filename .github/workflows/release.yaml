@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    paths:
+      - 'snap/**'
+      - 'gmic.conf/**'
+      - 'patches/**'
+      - '.github/workflows/release.yaml'
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release ${{ matrix.arch }} to latest/edge
+    runs-on: self-hosted-linux-${{ matrix.arch }}-jammy-xlarge
+    strategy:
+      matrix:
+        arch:
+          - amd64
+          - arm64
+      fail-fast: false
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v6
+      - name: Find and parse snapcraft.yaml
+        id: snapcraft-yaml
+        uses: snapcrafters/ci/parse-snapcraft-yaml@main
+      - name: Build snap
+        uses: snapcore/action-build@v1
+        id: build
+        with:
+          path: ${{ steps.snapcraft-yaml.outputs.project-root }}
+      - name: Review the built snap
+        uses: diddlesnaps/snapcraft-review-action@v1
+        with:
+          snap: ${{ steps.build.outputs.snap }}
+          isClassic: ${{ steps.snapcraft-yaml.outputs.classic }}
+          plugs: ${{ steps.snapcraft-yaml.outputs.plugs-file }}
+          slots: ${{ steps.snapcraft-yaml.outputs.slots-file }}
+      - name: Release to latest/edge
+        id: publish
+        shell: bash
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_PUBLISH }}
+          SNAP_FILE: ${{ steps.build.outputs.snap }}
+        run: |
+          snapcraft push "$SNAP_FILE" --release=latest/edge
