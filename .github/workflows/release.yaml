@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout the source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Find and parse snapcraft.yaml
         id: snapcraft-yaml
         uses: snapcrafters/ci/parse-snapcraft-yaml@main
@@ -63,7 +63,7 @@ jobs:
       created: ${{ steps.tag.outputs.created }}
     steps:
       - name: Checkout the source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Create and push tag for revision
         id: tag
         shell: bash
@@ -94,7 +94,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout the source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Create GitHub release
