@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   release:
-    name: Release ${{ matrix.arch }} to latest/edge
+    name: Release ${{ matrix.arch }} to all latest channels
     runs-on: self-hosted-linux-${{ matrix.arch }}-jammy-xlarge
     strategy:
       matrix:
@@ -43,17 +43,44 @@ jobs:
           isClassic: ${{ steps.snapcraft-yaml.outputs.classic }}
           plugs: ${{ steps.snapcraft-yaml.outputs.plugs-file }}
           slots: ${{ steps.snapcraft-yaml.outputs.slots-file }}
-      - name: Release to latest/edge
+      - name: Release to all latest channels
         id: publish
         shell: bash
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_PUBLISH }}
           SNAP_FILE: ${{ steps.build.outputs.snap }}
         run: |
-          snapcraft upload "$SNAP_FILE" --release=latest/edge
+          snapcraft upload "$SNAP_FILE" \
+            --release=latest/stable,latest/candidate,latest/beta,latest/edge
+  resolve-snap-info:
+    name: Resolve snap version and revision
+    needs: release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.snap-info.outputs.version }}
+      revision: ${{ steps.snap-info.outputs.revision }}
+    steps:
+      - name: Query latest/edge version and revision
+        id: snap-info
+        shell: bash
+        run: |
+          for attempt in {1..5}; do
+            edge_line=$(snap info gimp-plugins-gmic | grep latest/edge || true)
+            [[ -n "$edge_line" ]] && break
+            echo "snap info returned no latest/edge line (attempt $attempt), retrying..."
+            sleep 60
+          done
+          revision=$(echo "$edge_line" | cut -d "(" -f2 | cut -d ")" -f1)
+          version=$(echo "$edge_line" | awk '{print $2}')
+          if [[ -z "$revision" || -z "$version" ]]; then
+            echo "::error::Failed to parse revision/version from snap info latest/edge line: '$edge_line'"
+            exit 1
+          fi
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
   tag:
     name: Push tag for revision
-    needs: release
+    needs: resolve-snap-info
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -69,11 +96,11 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          revision: ${{ needs.resolve-snap-info.outputs.revision }}
+          version: ${{ needs.resolve-snap-info.outputs.version }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          revision=$(snap info gimp-plugins-gmic | grep latest/edge | cut -d "(" -f2 | cut -d ")" -f1)
-          version=$(snap info gimp-plugins-gmic | grep latest/edge | awk '{print $2}')
           tag_name="${version}-amd64-rev${revision}"
           echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
