@@ -42,7 +42,7 @@ parts:
 
   gmic:
     plugin: dump
-    source: https://gmic.eu/files/source/gmic_$CRAFT_PROJECT_VERSION.tar.gz
+    source: https://gmic.eu/get_file.php?file=source/gmic_$CRAFT_PROJECT_VERSION.tar.gz
     build-environment:
       - QT_SELECT: qt6
       - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
